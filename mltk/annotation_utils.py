@@ -44,3 +44,33 @@ def get_imgaug_bounding_boxes(objs):
     objs = map(op.itemgetter("coordinates"), objs)
     import imgaug as ia
     return map(lambda o: ia.BoundingBox(x1=o["xmin"], y1=o["ymin"], x2=o["xmax"], y2=o["ymax"]), objs)
+
+
+def bounding_box_to_object_coordinate(bbox):
+    """
+    Convert an imgaug BoundingBox back to coordinate
+
+    :type bbox: imgaug.imgaug.BoundingBox
+    :return: dict
+    """
+    xmin, xmax, ymin, ymax = bbox.x1, bbox.x2, bbox.y1, bbox.y2
+    return {
+        "xmin": xmin,
+        "xmax": xmax,
+        "ymin": ymin,
+        "ymax": ymax,
+        # x, y are center point of box.
+        "x": (xmin + xmax) / 2,
+        "y": (ymin + ymax) / 2,
+        "width": xmax - xmin,
+        "height": ymax - ymin,
+    }
+
+
+def try_load_annotation_for_image(path, annotation_search_paths=[]):
+    """
+    Try to locate and load the annotation for given image.
+
+    :param path:
+    :return:
+    """
