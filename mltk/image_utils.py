@@ -105,3 +105,33 @@ def augment_image(img, annotations=None):
         return ret_img, annotations
 
     return Image.fromarray(ret_img) if return_PIL_Image else ret_img
+
+
+def resize_with_short_side_restriction(img, side=299):
+    """
+    Resize an image, keep the aspect ratio, but with short side restriction.
+
+    :type img: PIL.Image.Image
+    :type side: int
+    :return: PIL.Image.Image
+    """
+    if img.width <= img.height:
+        W, H = side, side * img.height / img.width
+    else:
+        W, H = side * img.width / img.height, side
+    return img.resize((W, H))
+
+
+def resize_with_long_side_restriction(img, side=299):
+    """
+    Resize an image, keep the aspect ratio, but with long side restriction.
+
+    :type img: PIL.Image.Image
+    :type side: int
+    :return: PIL.Image.Image
+    """
+    if img.width <= img.height:
+        W, H = side * img.width / img.height, side
+    else:
+        W, H = side, side * img.height / img.width
+    return img.resize((W, H))
