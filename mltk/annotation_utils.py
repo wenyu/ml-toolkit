@@ -1,4 +1,7 @@
+import json
 import operator as op
+import os
+import xml.etree.ElementTree as ET
 
 def pascal_voc_to_objects(pascal_voc_obj):
     """
@@ -32,7 +35,7 @@ def pascal_voc_to_objects(pascal_voc_obj):
     return map(object_to_dict, pascal_voc_obj.findall("object"))
 
 
-def get_imgaug_bounding_boxes(objs):
+def object_coordinate_to_bounding_boxes(objs):
     """
     Convert to imgaug BoundingBox.
 
@@ -67,10 +70,45 @@ def bounding_box_to_object_coordinate(bbox):
     }
 
 
-def try_load_annotation_for_image(path, annotation_search_paths=[]):
+def guess_annotation_path(path, annotation_search_paths=[], annotation_ext=[".json", ".xml"]):
     """
     Try to locate and load the annotation for given image.
 
-    :param path:
-    :return:
+    :type path: str
+    :return: str | None
     """
+    path = os.path.abspath(path)
+    base_path, fn = os.path.split(path)
+    base_fn, ext = os.path.splitext(fn)
+    annotation_search_paths.append(base_path)
+
+    for annotation_dir in annotation_search_paths:
+        fn = os.path.join(annotation_dir, base_fn)
+        for ext in annotation_ext:
+            result = fn + ext
+            if os.path.exists(result):
+                return result
+
+    return None
+
+
+def load_object_coordinate_annotation(path, annotation_search_paths=[]):
+    """
+    Load annotation from given file.
+
+    :type path: str
+    :return: list[dict]
+    """
+    try:
+        _, ext = os.path.splitext(path)
+        if ext not in [".json", ".xml"]:
+            path = guess_annotation_path(path, annotation_search_paths)
+        _, ext = os.path.splitext(path)
+        ext = ext.lower()
+        if ext == ".json":
+            with open(path, "r") as f:
+                return json.load(f)
+        elif ext == ".xml":
+            return pascal_voc_to_objects(ET.parse(path))
+    except:
+        return []
