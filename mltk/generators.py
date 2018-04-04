@@ -1,6 +1,7 @@
 import multiprocessing as mp
 import sys
 import numpy as np
+import random
 
 
 def fault_tolerant_endless_generator(lambda_iterable):
@@ -64,7 +65,7 @@ def evenly_distributed_labeling_generator(X_data, Y_data):
         else:
             data[y] = [x]
 
-    gen = map(lambda (y, x): (fault_tolerant_endless_generator(lambda:x), y), data.items())
+    gen = map(lambda (y, x): (fault_tolerant_endless_generator(lambda:random.shuffle(x)), y), data.items())
 
     while True:
         for x_gen, y in gen:
