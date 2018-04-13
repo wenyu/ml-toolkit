@@ -9,7 +9,7 @@ def Darknet19(input_shape=(224, 224, 3), name="", pooling=None):
         y = K.layers.ZeroPadding2D((kernel_size >> 1), name=layer_name("pad" + suffix))(x)
         y = K.layers.Conv2D(filters, kernel_size, padding="valid", strides=strides, name=layer_name("conv" + suffix))(y)
         y = K.layers.BatchNormalization(name=layer_name("bn" + suffix))(y)
-        y = K.layers.LeakyReLU(alpha, name=layer_name("leaky" + suffix))(y)
+        y = K.layers.LeakyReLU(alpha, name=layer_name("act" + suffix))(y)
         return y
 
     x = K.layers.Input(shape=input_shape, name=layer_name("input"))
