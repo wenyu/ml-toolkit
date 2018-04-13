@@ -16,10 +16,7 @@ def fault_tolerant_endless_generator(lambda_iterable):
         try:
             for item in gen:
                 yield item
-        except KeyboardInterrupt:
-            sys.stderr.write("Keyboard Interrupt\n")
-            break
-        except StopIteration as e:
+        except (StopIteration, EnvironmentError) as e:
             sys.stderr.write(str(e) + '\n')
             gen = lambda_iterable()
 
