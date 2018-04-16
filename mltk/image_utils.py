@@ -139,19 +139,23 @@ def resize_with_long_side_restriction(img, side=299):
 
 
 def __PTIG_process(args):
-    path, size, augmenter, preprocessor = args
+    path, size, augment, preprocessor = args
     img = load_image(path)
     if size is not None:
         img = img.resize(size)
     img = np.array(img, float)
-    if augmenter is not None:
-        img = augment_image(img, augmenter=augmenter)
+    if augment == 1:
+        img = augment_image(img, augmenter=AUGMENT_SHAPE_ONLY)
+    elif augment in [2, True]:
+        img = augment_image(img, augmenter=AUGMENT_NORMAL)
+    elif augment == 3:
+        img = augment_image(img, augmenter=AUGMENT_EXTRA)
     if preprocessor is not None:
         img = preprocessor(img)
     return path, img
 
 
-def path_to_image_generator(paths, size=None, jobs=1, preprocessor=None, augmenter=None, shuffle_paths=False):
+def path_to_image_generator(paths, size=None, jobs=1, preprocessor=None, augment=False, shuffle_paths=False):
     """
     Yields (str, numpy.ndarray) as (path, image)
     """
@@ -164,7 +168,7 @@ def path_to_image_generator(paths, size=None, jobs=1, preprocessor=None, augment
     else:
         path_gen = generators.fault_tolerant_endless_generator(lambda: paths)
 
-    args = ((path, size, augmenter, preprocessor) for path in path_gen)
+    args = ((path, size, augment, preprocessor) for path in path_gen)
 
     return generators.fault_tolerant_endless_generator(
         lambda: generators.parallel_map_generator(__PTIG_process, args, jobs, jobs << 2))
