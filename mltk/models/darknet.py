@@ -1,7 +1,7 @@
 import keras as K
 
 
-def Darknet19(input_shape=(224, 224, 3), name="", pooling=None):
+def Darknet19(input_shape=(224, 224, 3), name="", pooling=None, initial_kernel=5, initial_stride=2):
     layer_name = lambda s: name + "_" + s
 
     def conv_bn(suffix, x, filters, kernel_size, strides=1, alpha=0.1):
@@ -13,7 +13,7 @@ def Darknet19(input_shape=(224, 224, 3), name="", pooling=None):
         return y
 
     x = K.layers.Input(shape=input_shape, name=layer_name("input"))
-    y = conv_bn("1", x, 32, 5, 2)
+    y = conv_bn("1", x, 32, initial_kernel, initial_stride)
     y = K.layers.MaxPool2D(strides=2, name=layer_name("pool_1"))(y)
     y = conv_bn("2", y, 64, 3)
     y = K.layers.MaxPool2D(strides=2, name=layer_name("pool_2"))(y)
