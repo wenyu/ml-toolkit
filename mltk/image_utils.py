@@ -4,6 +4,8 @@ import imgaug as ia
 import imgaug.augmenters as iaa
 import numpy as np
 from annotation_utils import object_coordinate_to_bounding_boxes, bounding_box_to_object_coordinate
+import generators
+import random
 
 __often = lambda aug: iaa.Sometimes(0.7, aug)
 __sometimes = lambda aug: iaa.Sometimes(0.5, aug)
@@ -70,17 +72,18 @@ AUGMENT_EXTRA = iaa.Sequential(
     __augseq_color + __augseq_shape + [__often(iaa.SomeOf((0, 2), __augseq_noise, random_order=True))],
     random_order=True)
 
+
 def load_image(path):
     return Image.open(path).convert("RGB")  # type: PIL.Image
 
 
-def augment_image(img, annotations=None, seq=AUGMENT_NORMAL):
+def augment_image(img, annotations=None, augmenter=AUGMENT_NORMAL):
     """
     Augment image and annotations
 
     :type img: numpy.ndarray | PIL.Image.Image
     :type annotations: list[dict] | None
-    :type seq: imgaug.augmenters.Sequential
+    :type augmenter: imgaug.augmenters.Sequential
     :return: (numpy.ndarray | PIL.Image.Image, list[dict]) | numpy.ndarray | PIL.Image.Image
     """
     return_PIL_Image = False
@@ -88,8 +91,10 @@ def augment_image(img, annotations=None, seq=AUGMENT_NORMAL):
         img = np.array(img)
         return_PIL_Image = True
 
-    det = seq.to_deterministic()
+    det = augmenter.to_deterministic()
     ret_img = det.augment_image(img)
+    if return_PIL_Image:
+        ret_img = Image.fromarray(ret_img)
 
     if annotations is not None:
         shape = img.shape[:2]
@@ -100,7 +105,7 @@ def augment_image(img, annotations=None, seq=AUGMENT_NORMAL):
 
         return ret_img, annotations
 
-    return Image.fromarray(ret_img) if return_PIL_Image else ret_img
+    return ret_img
 
 
 def resize_with_short_side_restriction(img, side=299):
@@ -131,3 +136,40 @@ def resize_with_long_side_restriction(img, side=299):
     else:
         W, H = side, side * img.height / img.width
     return img.resize((W, H))
+
+
+def __PTIG_process(args):
+    path, size, augmenter, preprocessor = args
+    img = load_image(path)
+    if size is not None:
+        img = img.resize(size)
+    img = np.array(img, float)
+    if augmenter is not None:
+        img = augment_image(img, augmenter=augmenter)
+    if preprocessor is not None:
+        img = preprocessor(img)
+    return path, img
+
+
+def path_to_image_generator(paths, size=None, jobs=1, preprocessor=None, augmenter=None, shuffle_paths=False):
+    """
+    Yields (str, numpy.ndarray) as (path, image)
+    """
+    if shuffle_paths:
+        def shuffle_list(l):
+            t = list(l)
+            random.shuffle(t)
+            return t
+        path_gen = generators.fault_tolerant_endless_generator(lambda: shuffle_list(paths))
+    else:
+        path_gen = generators.fault_tolerant_endless_generator(lambda: paths)
+
+    args = ((path, size, augmenter, preprocessor) for path in path_gen)
+
+    return generators.fault_tolerant_endless_generator(
+        lambda: generators.parallel_map_generator(__PTIG_process, args, jobs, jobs << 2))
+
+
+def auto_encoder_image_generator(paths, batch_size=64, *args, **kwargs):
+    img_pair_gen = ((img, img) for path, img in path_to_image_generator(paths, *args, **kwargs))
+    return generators.batch_x_y_generator(img_pair_gen, batch_size)
