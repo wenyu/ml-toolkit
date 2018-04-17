@@ -35,7 +35,7 @@ model.summary()
 stages = map(lambda (l, k): (prefix + "_" + l, k), [
     ("act_2", 2),
     ("act_3.3", 4),
-    ("act_4.5", 8),
+    ("act_4.3", 8),
     ("act_5.5", 16),
     ("act_6.5", 32),
 ])
@@ -56,13 +56,13 @@ for stage, kernel_size in stages:
                 trainable = True
 
         ae_model.compile(optimizer="adam", loss=my_loss)
-        ae_model.fit_generator(batch_gen, steps_per_epoch=128, epochs=16)
+        ae_model.fit_generator(batch_gen, steps_per_epoch=128, epochs=6)
 
     for l in ae_model.layers:
         l.trainable = True
 
     ae_model.compile(optimizer="adam", loss=my_loss)
-    ae_model.fit_generator(batch_gen, steps_per_epoch=128, epochs=64)
+    ae_model.fit_generator(batch_gen, steps_per_epoch=128, epochs=24)
     last_stage = stage
 
     for l in ae_model.layers:
