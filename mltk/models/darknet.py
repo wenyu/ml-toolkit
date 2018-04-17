@@ -13,7 +13,7 @@ def Darknet19(input_shape=(224, 224, 3), name="", pooling=None):
         return y
 
     x = K.layers.Input(shape=input_shape, name=layer_name("input"))
-    y = conv_bn("1", x, 32, 5)
+    y = conv_bn("1", x, 32, 3)
     y = K.layers.MaxPool2D(strides=2, name=layer_name("pool_1"))(y)
     y = conv_bn("2", y, 64, 3)
     y = K.layers.MaxPool2D(strides=2, name=layer_name("pool_2"))(y)
