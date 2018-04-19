@@ -1,7 +1,7 @@
 import keras as K
 
 
-def Darknet19(input_shape=(224, 224, 3), name="", pooling=None):
+def Darknet19(input_shape=(256, 256, 3), name=""):
     layer_name = lambda s: name + "_" + s
 
     def conv_bn(suffix, x, filters, kernel_size, strides=1, alpha=0.1):
@@ -36,11 +36,5 @@ def Darknet19(input_shape=(224, 224, 3), name="", pooling=None):
     y = conv_bn("6.3", y, 1024, 3)
     y = conv_bn("6.4", y, 512, 1)
     y = conv_bn("6.5", y, 1024, 3)
-    y = K.layers.Conv2D(1000, 1, name=layer_name("conv_final"))(y)
-
-    if pooling in ["avg", "average"]:
-        y = K.layers.GlobalAvgPool2D(name=layer_name("pool_global_avg"))(y)
-    elif pooling in ["max", "maximum"]:
-        y = K.layers.GlobalAvgPool2D(name=layer_name("pool_global_max"))(y)
 
     return K.models.Model(x, y)
