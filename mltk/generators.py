@@ -53,6 +53,9 @@ def parallel_map_generator(func, iterable, jobs=-1, batch_size=-1):
             for result_item in result:
                 yield result_item
 
+    pool.terminate()
+    pool.close()
+
 
 def evenly_distributed_labeling_generator(X_data, Y_data):
     data = {}
